@@ -83,7 +83,6 @@ The project is split into various packages:
 | [Variography.jl](https://github.com/juliohm/Variography.jl) | Variogram estimation and modeling, and related tools. |
 | [KrigingEstimators.jl](https://github.com/juliohm/KrigingEstimators.jl) | High-performance implementations of Kriging estimators. |
 | [GeoStatsBase.jl](https://github.com/juliohm/GeoStatsBase.jl) | Base package containing problem and solution specifications (for developers). |
-| [GeoStatsDevTools.jl](https://github.com/juliohm/GeoStatsDevTools.jl) | Developer tools for writing new solvers (for developers). |
 
 The main package (i.e. GeoStats.jl) is self-contained, and provides high-performance
 Kriging-based estimation/simulation algorithms over arbitrary domains. Other packages
@@ -144,13 +143,13 @@ using Plots
 # 75.0, 50.0, mountain view,           1.0
 
 # read spreadsheet file containing spatial data
-geodata = readgeotable("data.csv", coordnames=[:x,:y])
+sdata = readgeotable("data.csv", coordnames=[:x,:y])
 
 # define spatial domain (e.g. regular grid, point collection)
-grid = RegularGrid{Float64}(100, 100)
+sdomain = RegularGrid{Float64}(100, 100)
 
 # define estimation problem for any data column(s) (e.g. :precipitation)
-problem = EstimationProblem(geodata, grid, :precipitation)
+problem = EstimationProblem(sdata, sdomain, :precipitation)
 
 # choose a solver from the list of solvers
 solver = Kriging(
