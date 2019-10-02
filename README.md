@@ -36,33 +36,6 @@
 - Exploit modern hardware aggressively, including GPUs and computer clusters.
 - Educate people outside of the field about the existence of geostatistics.
 
-### Related packages
-
-- [GaussianProcesses.jl](https://github.com/STOR-i/GaussianProcesses.jl) &mdash; Gaussian processes
-(the method) and Simple Kriging are essentially [two names for the same concept](https://en.wikipedia.org/wiki/Kriging).
-The derivation of Kriging estimators, however; does **not** require distributional assumptions. It is a
-beautiful coincidence that for multivariate Gaussian distributions, Simple Kriging gives the conditional
-expectation. [Matheron](https://en.wikipedia.org/wiki/Georges_Matheron)
-and other important geostatisticians have generalized Gaussian processes to more general random fields with
-locally-varying mean and for situations where the mean is unknown. GeoStats.jl includes Gaussian processes as
-a special case as well as other more practical Kriging variants, see the
-[Gaussian processes example](https://github.com/juliohm/GeoStatsTutorials).
-
-- [MLKernels.jl](https://github.com/trthatcher/MLKernels.jl) &mdash; Spatial structure can be
-represented in many different forms: covariance, variogram, correlogram, etc. Variograms are more
-general than covariance kernels according to the intrinsic stationary property. This means that
-there are variogram models with no covariance counterpart. Furthermore, empirical variograms can be
-easily estimated from the data (in various directions) with an efficient procedure. GeoStats.jl treats
-variograms as first-class objects, see the
-[Variogram modeling example](https://github.com/juliohm/GeoStatsTutorials).
-
-- [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) &mdash; Kriging and Spline interpolation
-have different purposes, yet these two methods are sometimes listed as competing alternatives. Kriging estimation
-is about minimizing variance (or estimation error), whereas Spline interpolation is about forcedly smooth estimators
-derived for *computer visualization*. [Kriging is a generalization of Splines](http://www.sciencedirect.com/science/article/pii/009830048490030X)
-in which one has the freedom to customize spatial structure based on data. Besides the estimate itself, Kriging
-also provides the variance map as a function of knots configuration.
-
 ## Installation
 
 Get the latest stable release with Julia's package manager:
@@ -70,6 +43,51 @@ Get the latest stable release with Julia's package manager:
 ```julia
 ] add GeoStats
 ```
+
+## Documentation
+
+- [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
+- [**LATEST**][docs-latest-url] &mdash; *in-development version of the documentation.*
+
+## Tutorials
+
+A set of Jupyter notebooks demonstrating the current functionality of the package is available
+in [GeoStatsTutorials](https://github.com/juliohm/GeoStatsTutorials).
+
+Below is a quick preview of the high-level API. For the full example, please check
+[this notebook](http://nbviewer.jupyter.org/github/juliohm/GeoStatsTutorials/blob/master/notebooks/EstimationProblems.ipynb).
+
+```julia
+using GeoStats
+using Plots
+
+# data.csv:
+#    x,    y,       station, precipitation
+# 25.0, 25.0,     palo alto,           1.0
+# 50.0, 75.0,  redwood city,           0.0
+# 75.0, 50.0, mountain view,           1.0
+
+# read spreadsheet file containing spatial data
+sdata = readgeotable("data.csv", coordnames=[:x,:y])
+
+# define spatial domain (e.g. regular grid, point collection)
+sdomain = RegularGrid{Float64}(100, 100)
+
+# define estimation problem for any data column(s) (e.g. :precipitation)
+problem = EstimationProblem(sdata, sdomain, :precipitation)
+
+# choose a solver from the list of solvers
+solver = Kriging(
+  :precipitation => (variogram=GaussianVariogram(range=35.),)
+)
+
+# solve the problem
+solution = solve(problem, solver)
+
+# plot the solution
+contourf(solution, clabels=true)
+```
+![EstimationSolution](docs/src/images/EstimationSolution.png)
 
 ## Project organization
 
@@ -119,51 +137,6 @@ If you are a developer and your solver is not listed above, please open a pull r
 we will be happy to review and add it to the list. Please check the developer guide in the
 documentation below for instructions on how to write your own solvers.
 
-## Documentation
-
-- [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
-- [**LATEST**][docs-latest-url] &mdash; *in-development version of the documentation.*
-
-## Tutorials
-
-A set of Jupyter notebooks demonstrating the current functionality of the package is available
-in [GeoStatsTutorials](https://github.com/juliohm/GeoStatsTutorials).
-
-Below is a quick preview of the high-level API. For the full example, please check
-[this notebook](http://nbviewer.jupyter.org/github/juliohm/GeoStatsTutorials/blob/master/notebooks/EstimationProblems.ipynb).
-
-```julia
-using GeoStats
-using Plots
-
-# data.csv:
-#    x,    y,       station, precipitation
-# 25.0, 25.0,     palo alto,           1.0
-# 50.0, 75.0,  redwood city,           0.0
-# 75.0, 50.0, mountain view,           1.0
-
-# read spreadsheet file containing spatial data
-sdata = readgeotable("data.csv", coordnames=[:x,:y])
-
-# define spatial domain (e.g. regular grid, point collection)
-sdomain = RegularGrid{Float64}(100, 100)
-
-# define estimation problem for any data column(s) (e.g. :precipitation)
-problem = EstimationProblem(sdata, sdomain, :precipitation)
-
-# choose a solver from the list of solvers
-solver = Kriging(
-  :precipitation => (variogram=GaussianVariogram(range=35.),)
-)
-
-# solve the problem
-solution = solve(problem, solver)
-
-# plot the solution
-contourf(solution, contour_labels=true)
-```
-![EstimationSolution](docs/src/images/EstimationSolution.png)
-
 ## Contributing and supporting
 
 Contributions are very welcome, as are feature requests and suggestions. Please
@@ -211,6 +184,33 @@ If you find GeoStats.jl useful in your work, please consider citing it:
   <img src="docs/src/images/Deltares.png" height="150" hspace="20">
   <img src="docs/src/images/ENI.png" height="150" hspace="20">
 </p>
+
+### Related packages
+
+- [GaussianProcesses.jl](https://github.com/STOR-i/GaussianProcesses.jl) &mdash; Gaussian processes
+(the method) and Simple Kriging are essentially [two names for the same concept](https://en.wikipedia.org/wiki/Kriging).
+The derivation of Kriging estimators, however; does **not** require distributional assumptions. It is a
+beautiful coincidence that for multivariate Gaussian distributions, Simple Kriging gives the conditional
+expectation. [Matheron](https://en.wikipedia.org/wiki/Georges_Matheron)
+and other important geostatisticians have generalized Gaussian processes to more general random fields with
+locally-varying mean and for situations where the mean is unknown. GeoStats.jl includes Gaussian processes as
+a special case as well as other more practical Kriging variants, see the
+[Gaussian processes example](https://github.com/juliohm/GeoStatsTutorials).
+
+- [MLKernels.jl](https://github.com/trthatcher/MLKernels.jl) &mdash; Spatial structure can be
+represented in many different forms: covariance, variogram, correlogram, etc. Variograms are more
+general than covariance kernels according to the intrinsic stationary property. This means that
+there are variogram models with no covariance counterpart. Furthermore, empirical variograms can be
+easily estimated from the data (in various directions) with an efficient procedure. GeoStats.jl treats
+variograms as first-class objects, see the
+[Variogram modeling example](https://github.com/juliohm/GeoStatsTutorials).
+
+- [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) &mdash; Kriging and Spline interpolation
+have different purposes, yet these two methods are sometimes listed as competing alternatives. Kriging estimation
+is about minimizing variance (or estimation error), whereas Spline interpolation is about forcedly smooth estimators
+derived for *computer visualization*. [Kriging is a generalization of Splines](http://www.sciencedirect.com/science/article/pii/009830048490030X)
+in which one has the freedom to customize spatial structure based on data. Besides the estimate itself, Kriging
+also provides the variance map as a function of knots configuration.
 
 [travis-img]: https://travis-ci.org/juliohm/GeoStats.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/juliohm/GeoStats.jl
